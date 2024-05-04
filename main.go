@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -8,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"strings"
 )
 
 type PullRequest struct {
@@ -52,6 +54,19 @@ func sendSlackMessage(message string) error {
 	return nil
 }
 
+func stringPrompt(label string) string {
+	var s string
+	r := bufio.NewReader(os.Stdin)
+	for {
+		fmt.Fprint(os.Stderr, label+" ")
+		s, _ = r.ReadString('\n')
+		if s != "" {
+			break
+		}
+	}
+	return strings.TrimSpace(s)
+}
+
 func main() {
 	cmd := exec.Command("gh", "pr", "view", "--json", "url,number,additions,deletions")
 	output, err := cmd.Output()
@@ -66,16 +81,16 @@ func main() {
 		log.Fatalf("Error unmarshaling output from gh pr view command: %v", err)
 	}
 
-	// Create the message format for Slack
-	// messageFormat := `{"channel": "%s", "text": "<%s|PR #%s>"}`
+	prDescription := stringPrompt(fmt.Sprintf("Provide a description for PR #%s:", fmt.Sprint(pr.Number)))
 
-	messageFormat := `{"channel": "%s", "text": "(+%s/-%s) <%s|PR #%s>"}`
+	// Create the message format for Slack
+	messageFormat := `{"channel": "%s", "text": "(+%s/-%s) <%s|PR #%s>: %s"}`
 
 	channelID := os.Getenv("SLACK_CHANNEL_ID")
 	if channelID == "" {
 		log.Fatal("SLACK_CHANNEL_ID environment variable is not set")
 	}
-	message := fmt.Sprintf(messageFormat, channelID, fmt.Sprint(pr.Additions), fmt.Sprint(pr.Deletions), pr.URL, fmt.Sprint(pr.Number))
+	message := fmt.Sprintf(messageFormat, channelID, fmt.Sprint(pr.Additions), fmt.Sprint(pr.Deletions), pr.URL, fmt.Sprint(pr.Number), prDescription)
 
 	err = sendSlackMessage(message)
 	if err != nil {
