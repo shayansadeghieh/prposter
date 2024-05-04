@@ -8,16 +8,13 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
-	"strings"
 )
 
 type PullRequest struct {
-	URL string `json:"url"`
-}
-
-func extractPrNumber(url string) string {
-	urlPortions := strings.Split(url, "/")
-	return urlPortions[len(urlPortions)-1]
+	URL       string `json:"url"`
+	Number    int    `json:"number"`
+	Additions int    `json:"additions"`
+	Deletions int    `json:"deletions"`
 }
 
 func sendSlackMessage(message string) error {
@@ -56,7 +53,7 @@ func sendSlackMessage(message string) error {
 }
 
 func main() {
-	cmd := exec.Command("gh", "pr", "view", "--json", "url")
+	cmd := exec.Command("gh", "pr", "view", "--json", "url,number,additions,deletions")
 	output, err := cmd.Output()
 	if err != nil {
 		log.Fatalf("Error running gh pr view command: %v", err)
@@ -69,16 +66,16 @@ func main() {
 		log.Fatalf("Error unmarshaling output from gh pr view command: %v", err)
 	}
 
-	prNumber := extractPrNumber(pr.URL)
-
 	// Create the message format for Slack
-	messageFormat := `{"channel": "%s", "text": "<%s|PR #%s>"}`
+	// messageFormat := `{"channel": "%s", "text": "<%s|PR #%s>"}`
+
+	messageFormat := `{"channel": "%s", "text": "(+%s/-%s) <%s|PR #%s>"}`
 
 	channelID := os.Getenv("SLACK_CHANNEL_ID")
 	if channelID == "" {
 		log.Fatal("SLACK_CHANNEL_ID environment variable is not set")
 	}
-	message := fmt.Sprintf(messageFormat, channelID, pr.URL, prNumber)
+	message := fmt.Sprintf(messageFormat, channelID, fmt.Sprint(pr.Additions), fmt.Sprint(pr.Deletions), pr.URL, fmt.Sprint(pr.Number))
 
 	err = sendSlackMessage(message)
 	if err != nil {
