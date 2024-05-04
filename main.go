@@ -1,78 +1,87 @@
 package main
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
+	"os"
 	"os/exec"
+	"strings"
 )
 
-// func prPrompt(label string) string {
-// 	var s string
-// 	r := bufio.NewReader(os.Stdin)
-// 	// for {
-// 		cmd := exec.Command("gh", "pr", "list")
-// 		// fmt.Fprint(os.Stderr, label+": ")
+type PullRequest struct {
+	URL string `json:"url"`
+}
 
-// 		if err := cmd.Run(); err != nil {
-// 			log.Fatal(err)
-// 		}
+func extractPrNumber(url string) string {
+	urlPortions := strings.Split(url, "/")
+	return urlPortions[len(urlPortions)-1]
+}
 
-// 		s, _ = r.ReadString('\n')
-// 		if s != "" {
-// 			break
-// 		}
-// 	}
-// 	return strings.TrimSpace(s)
-
-// }
-
-func main() {
-	cmd := exec.Command("gh", "pr", "list")
-	output, err := cmd.Output()
-	if err != nil {
-		log.Fatalf("Error running gh pr list command: %v", err)
-	} else {
-		fmt.Println("Output:", string(output))
+func sendSlackMessage(message string) error {
+	token := os.Getenv("SLACK_API_TOKEN")
+	if token == "" {
+		return fmt.Errorf("SLACK_API_TOKEN environment variable is not set")
 	}
 
-	// pr := prPrompt("Choose the PR to post")
-	// fmt.Println("the pr is", pr)
+	// Slack API URL
+	url := "https://slack.com/api/chat.postMessage"
 
-	// Set environment variables
-	// token := os.Getenv("SLACK_API_TOKEN")
-	// if token == "" {
-	// 	log.Fatal("SLACK_API_TOKEN environment variable is not set")
-	// }
-	// channelID := os.Getenv("SLACK_CHANNEL_ID")
-	// if channelID == "" {
-	// 	log.Fatal("SLACK_CHANNEL_ID environment variable is not set")
-	// }
+	// Create HTTP request
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer([]byte(message)))
+	if err != nil {
+		return err
+	}
 
-	// // TODO: Read in the user's message
-	// messageFormat := `{"channel": "%s", "text": "Hello, World!"}`
-	// message := fmt.Sprintf(messageFormat, channelID)
-	// requestData := []byte(message)
+	// Set request headers
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+token)
 
-	// // Initialize a request to the slack post message API
-	// slackUrl := "https://slack.com/api/chat.postMessage"
-	// request, err := http.NewRequest("POST", slackUrl, bytes.NewBuffer(requestData))
-	// if err != nil {
-	// 	log.Fatalf("Error initializing NewRequest: %v", err)
-	// }
-	// request.Header.Set("Content-Type", "application/json")
-	// request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token)) // Set the token in the Authorization header
+	// Send HTTP request
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
 
-	// client := http.Client{}
-	// response, err := client.Do(request)
-	// if err != nil {
-	// 	log.Fatalf("Error sending request to %s: %v", slackUrl, err)
-	// }
-	// defer response.Body.Close()
+	// Check response status
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("slack API request failed with status: %s", resp.Status)
+	}
 
-	// body, err := io.ReadAll(response.Body)
-	// if err != nil {
-	// 	log.Fatalf("Error reading response body: %v", err)
-	// }
+	return nil
+}
 
-	// println(string(body))
+func main() {
+	cmd := exec.Command("gh", "pr", "view", "--json", "url")
+	output, err := cmd.Output()
+	if err != nil {
+		log.Fatalf("Error running gh pr view command: %v", err)
+	}
+
+	var pr PullRequest
+	err = json.Unmarshal([]byte(output), &pr)
+
+	if err != nil {
+		log.Fatalf("Error unmarshaling output from gh pr view command: %v", err)
+	}
+
+	prNumber := extractPrNumber(pr.URL)
+
+	// Create the message format for Slack
+	messageFormat := `{"channel": "%s", "text": "<%s|PR #%s>"}`
+
+	channelID := os.Getenv("SLACK_CHANNEL_ID")
+	if channelID == "" {
+		log.Fatal("SLACK_CHANNEL_ID environment variable is not set")
+	}
+	message := fmt.Sprintf(messageFormat, channelID, pr.URL, prNumber)
+
+	err = sendSlackMessage(message)
+	if err != nil {
+		log.Fatalf("Error sending message to Slack: %v", err)
+	}
 }
