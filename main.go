@@ -8,19 +8,20 @@ import (
 )
 
 func main() {
-	names, err := internal.ReadSlackUsers()
+	// TODO: Bring back names
+	_, err := internal.ReadSlackUsers()
 	if err != nil {
 		log.Fatalf("Error reading slack users: %v", err)
 	}
-	fmt.Println("names are", names)
 
 	pr, err := internal.GhCommand()
 	if err != nil {
 		log.Fatalf("Error running gh command: %v", err)
 	}
-	fmt.Println("pr is", pr)
 
-	prDescription := internal.StringPrompt(fmt.Sprintf("Provide a description for PR #%s:", fmt.Sprint(pr.Number)))
+	prDescription := internal.StringPrompt(fmt.Sprintf("Provide a description for PR #%s: ", fmt.Sprint(pr.Number)))
+
+	fmt.Println("this is pr descr", prDescription)
 
 	// Create the message format for Slack
 	messageFormat := `{"channel": "%s", "text": "(+%s/-%s) <%s|PR #%s>: %s"}`

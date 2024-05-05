@@ -33,20 +33,16 @@ func GhCommand() (PullRequest, error) {
 	return pr, nil
 }
 
-func StringPrompt(label string) string {
+func StringPrompt(prompt string) string {
 	reader := bufio.NewReader(os.Stdin)
 	var input string
 	for {
-		fmt.Print(label)
+		fmt.Print(prompt)
 		// Read the keyboad input.
-		input, err := reader.ReadString('\n')
-		if err != nil {
-			fmt.Printf("Error reading pr description: %v", err)
-		}
+		input, _ = reader.ReadString('\n')
 		if input != "" {
 			break
 		}
-
 	}
 	return strings.TrimSpace(input)
 }
