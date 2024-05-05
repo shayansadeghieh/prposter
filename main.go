@@ -1,51 +1,40 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
-	"io"
 	"log"
-	"net/http"
 	"os"
+	"prposter/internal"
 )
 
 func main() {
-
-	// Set environment variables
-	token := os.Getenv("SLACK_API_TOKEN")
-	if token == "" {
-		log.Fatal("SLACK_API_TOKEN environment variable is not set")
+	// TODO: Bring back names
+	_, err := internal.ReadSlackUsers()
+	if err != nil {
+		log.Fatalf("Error reading slack users: %v", err)
 	}
+
+	pr, err := internal.GhCommand()
+	if err != nil {
+		log.Fatalf("Error running gh command: %v", err)
+	}
+
+	prDescription := internal.StringPrompt(fmt.Sprintf("Provide a description for PR #%s: ", fmt.Sprint(pr.Number)))
+
+	fmt.Println("this is pr descr", prDescription)
+
+	// Create the message format for Slack
+	messageFormat := `{"channel": "%s", "text": "(+%s/-%s) <%s|PR #%s>: %s"}`
+
 	channelID := os.Getenv("SLACK_CHANNEL_ID")
 	if channelID == "" {
 		log.Fatal("SLACK_CHANNEL_ID environment variable is not set")
 	}
+	message := fmt.Sprintf(messageFormat, channelID, fmt.Sprint(pr.Additions), fmt.Sprint(pr.Deletions), pr.URL, fmt.Sprint(pr.Number), prDescription)
 
-	// TODO: Read in the user's message
-	messageFormat := `{"channel": "%s", "text": "Hello, World!"}`
-	message := fmt.Sprintf(messageFormat, channelID)
-	requestData := []byte(message)
-
-	// Initialize a request to the slack post message API
-	slackUrl := "https://slack.com/api/chat.postMessage"
-	request, err := http.NewRequest("POST", slackUrl, bytes.NewBuffer(requestData))
+	err = internal.SendSlackMessage(message)
 	if err != nil {
-		log.Fatalf("Error initializing NewRequest: %v", err)
-	}
-	request.Header.Set("Content-Type", "application/json")
-	request.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token)) // Set the token in the Authorization header
-
-	client := http.Client{}
-	response, err := client.Do(request)
-	if err != nil {
-		log.Fatalf("Error sending request to %s: %v", slackUrl, err)
-	}
-	defer response.Body.Close()
-
-	body, err := io.ReadAll(response.Body)
-	if err != nil {
-		log.Fatalf("Error reading response body: %v", err)
+		log.Fatalf("Error sending message to Slack: %v", err)
 	}
 
-	println(string(body))
 }
