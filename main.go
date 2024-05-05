@@ -21,8 +21,6 @@ func main() {
 
 	prDescription := internal.StringPrompt(fmt.Sprintf("Provide a description for PR #%s: ", fmt.Sprint(pr.Number)))
 
-	fmt.Println("this is pr descr", prDescription)
-
 	// Create the message format for Slack
 	messageFormat := `{"channel": "%s", "text": "(+%s/-%s) <%s|PR #%s>: %s"}`
 
