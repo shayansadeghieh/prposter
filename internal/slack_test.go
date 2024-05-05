@@ -15,7 +15,7 @@ func TestExtractNames(t *testing.T) {
 			name: "Multiple members",
 			members: AllMembers{
 				Members: []Member{
-					{Profile: Profile{RealNameNormalized: "shaya sadeghieh"}},
+					{Profile: Profile{RealNameNormalized: "shayan sadeghieh"}},
 					{Profile: Profile{RealNameNormalized: "foo bar"}},
 					{Profile: Profile{RealNameNormalized: "foo"}},
 				},
