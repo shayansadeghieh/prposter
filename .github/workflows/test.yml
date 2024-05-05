@@ -18,9 +18,12 @@ jobs:
       - name: Install dependencies
         run: go get .
 
+      - name: Echo pwd
+        run: echo $PWD
+
       # Check if build works
       - name: Build
-        run: go build -v ./...
+        run: go build ./...
 
       - name: Test with the Go CLI
         run: go test ./...
