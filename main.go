@@ -23,9 +23,14 @@ func filterNames(names []string, filter string) []string {
 func StringPromptReview(prompt string, names []string) string {
 	reader := bufio.NewReader(os.Stdin)
 
-	var input string
+	var reviewer string
+	var counter int
 	for {
-		fmt.Print("Enter reviewer (we fuzzy match): ")
+		if counter > 0 {
+			fmt.Print("\nEnter a reviewer (we fuzzy match): ")
+		} else {
+			fmt.Print("Enter a reviewer (we fuzzy match): ")
+		}
 
 		input, err := reader.ReadString('\n')
 		if err != nil {
@@ -47,20 +52,22 @@ func StringPromptReview(prompt string, names []string) string {
 		// If we receive more than one name, say something witty prompt the user to choose one
 		// using the number next to the name
 		// Switch on the length of filtered names
-		switch len(filteredNames) {
-		case 0:
+
+		if len(filteredNames) == 0 {
 			fmt.Println("0 results. Are you sure this person works here? Try again.")
-		case 1:
+		} else if len(filteredNames) == 1 {
 			fmt.Println(filteredNames[0])
-			input = filteredNames[0]
+			reviewer = filteredNames[0]
 			break
-		default:
+		} else {
 			fmt.Printf("Too lazy. I found %d results. Try again.", len(filteredNames))
 		}
 
+		counter += 1
+
 	}
 
-	return strings.TrimSpace(input)
+	return reviewer
 }
 
 func main() {
