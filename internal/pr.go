@@ -21,7 +21,7 @@ func GhCommand() (PullRequest, error) {
 	cmd := exec.Command("gh", "pr", "view", "--json", "url,number,additions,deletions")
 	output, err := cmd.Output()
 	if err != nil {
-		log.Fatalf("Error running gh pr view command: %v", err)
+		return PullRequest{}, err
 	}
 
 	var pr PullRequest
