@@ -5,29 +5,31 @@ import (
 	"testing"
 )
 
-func TestExtractNames(t *testing.T) {
+func TestMapNameToID(t *testing.T) {
 	testCases := []struct {
-		name    string
-		members AllMembers
-		exp     []string
+		name     string
+		members  AllMembers
+		expMap   map[string]string
+		expSlice []string
 	}{
 		{
 			name: "Multiple members",
 			members: AllMembers{
 				Members: []Member{
-					{Profile: Profile{RealNameNormalized: "shayan sadeghieh"}},
-					{Profile: Profile{RealNameNormalized: "foo bar"}},
-					{Profile: Profile{RealNameNormalized: "foo"}},
+					{Profile: Profile{RealNameNormalized: "shayan sadeghieh"},
+						ID: "12345"},
+					{Profile: Profile{RealNameNormalized: "foo bar"},
+						ID: "abcd"},
+					{Profile: Profile{RealNameNormalized: "foo"},
+						ID: "abcd12345"},
 				},
 			},
-			exp: []string{"shayan sadeghieh", "foo bar", "foo"},
-		},
-		{
-			name: "No members",
-			members: AllMembers{
-				Members: []Member{},
+			expMap: map[string]string{
+				"shayan sadeghieh": "12345",
+				"foo bar":          "abcd",
+				"foo":              "abcd12345",
 			},
-			exp: []string{},
+			expSlice: []string{"shayan sadeghieh", "foo bar", "foo"},
 		},
 	}
 
@@ -35,10 +37,14 @@ func TestExtractNames(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Run the function being tested
-			names := extractNames(tc.members)
-			// Check if the output matches the expected result
-			if !reflect.DeepEqual(names, tc.exp) {
-				t.Errorf("Expected %v, but got %v", tc.exp, names)
+			namesToID, names := mapNameToID(tc.members)
+
+			if !reflect.DeepEqual(namesToID, tc.expMap) {
+				t.Errorf("Mapping names to ID: Expected %v, but got %v", tc.expMap, namesToID)
+			}
+
+			if !reflect.DeepEqual(names, tc.expSlice) {
+				t.Errorf("Extracting names: Expected %v, but got %v", tc.expSlice, names)
 			}
 		})
 	}
