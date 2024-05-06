@@ -10,12 +10,14 @@ import (
 	"os"
 )
 
-func extractNames(members AllMembers) []string {
-	names := make([]string, len(members.Members))
-	for i, member := range members.Members {
-		names[i] = member.Profile.RealNameNormalized
+func mapNameToID(members AllMembers) (map[string]string, []string) {
+	nameToID := make(map[string]string)
+	var names []string
+	for _, member := range members.Members {
+		nameToID[member.Profile.RealNameNormalized] = member.ID
+		names = append(names, member.Profile.RealNameNormalized)
 	}
-	return names
+	return nameToID, names
 }
 
 type AllMembers struct {
@@ -24,6 +26,7 @@ type AllMembers struct {
 
 type Member struct {
 	Profile Profile `json:"profile"`
+	ID      string  `json:"id"`
 }
 
 type Profile struct {
@@ -31,17 +34,17 @@ type Profile struct {
 	RealNameNormalized string `json:"real_name_normalized"`
 }
 
-func ReadSlackUsers() ([]string, error) {
+func ReadSlackUsers() (map[string]string, []string, error) {
 	token := os.Getenv("SLACK_API_TOKEN")
 	if token == "" {
-		return nil, fmt.Errorf("SLACK_API_TOKEN environment variable is not set")
+		return nil, nil, fmt.Errorf("SLACK_API_TOKEN environment variable is not set")
 	}
 	url := "https://slack.com/api/users.list"
 
 	// Create HTTP request
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	// Set request headers
@@ -52,13 +55,14 @@ func ReadSlackUsers() ([]string, error) {
 	client := &http.Client{}
 	resp, err := client.Do(req)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
+
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	var slackMembers AllMembers
@@ -68,9 +72,9 @@ func ReadSlackUsers() ([]string, error) {
 	}
 
 	// Extract names and place them into a slice of names
-	names := extractNames(slackMembers)
+	nameToID, names := mapNameToID(slackMembers)
 
-	return names, nil
+	return nameToID, names, nil
 
 }
 
