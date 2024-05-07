@@ -1,13 +1,9 @@
 package internal
 
 import (
-	"bufio"
 	"encoding/json"
-	"fmt"
 	"log"
-	"os"
 	"os/exec"
-	"strings"
 )
 
 type PullRequest struct {
@@ -21,7 +17,7 @@ func GhCommand() (PullRequest, error) {
 	cmd := exec.Command("gh", "pr", "view", "--json", "url,number,additions,deletions")
 	output, err := cmd.Output()
 	if err != nil {
-		log.Fatalf("Error running gh pr view command: %v", err)
+		return PullRequest{}, err
 	}
 
 	var pr PullRequest
@@ -31,18 +27,4 @@ func GhCommand() (PullRequest, error) {
 	}
 
 	return pr, nil
-}
-
-func StringPrompt(prompt string) string {
-	reader := bufio.NewReader(os.Stdin)
-	var input string
-	for {
-		fmt.Print(prompt)
-		// Read the keyboad input.
-		input, _ = reader.ReadString('\n')
-		if input != "" {
-			break
-		}
-	}
-	return strings.TrimSpace(input)
 }
