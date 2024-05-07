@@ -1,13 +1,9 @@
 package internal
 
 import (
-	"bufio"
 	"encoding/json"
-	"fmt"
 	"log"
-	"os"
 	"os/exec"
-	"strings"
 )
 
 type PullRequest struct {
@@ -31,18 +27,4 @@ func GhCommand() (PullRequest, error) {
 	}
 
 	return pr, nil
-}
-
-func StringPrompt(prompt string) string {
-	reader := bufio.NewReader(os.Stdin)
-	var input string
-	for {
-		fmt.Print(prompt)
-		// Read the keyboad input.
-		input, _ = reader.ReadString('\n')
-		if input != "" {
-			break
-		}
-	}
-	return strings.TrimSpace(input)
 }
