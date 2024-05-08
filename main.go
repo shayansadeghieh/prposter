@@ -14,13 +14,25 @@ func main() {
 	}
 
 	namesToID, names, err := internal.ReadSlackUsers()
+
+	// Sometimes the slack API rate limits you but you get a nil error.
+	if len(names) == 0 {
+		log.Fatalf("Failed to read slack users.")
+	}
+
 	if err != nil {
 		log.Fatalf("Error reading slack users: %v", err)
 	}
 
-	reviewer := internal.StringPromptReview(fmt.Sprintf("Enter a reviewer for PR #%s: ", fmt.Sprint(pr.Number)), names)
+	reviewer, err := internal.ReviewerPrompt(fmt.Sprintf("Enter a reviewer for PR #%s", fmt.Sprint(pr.Number)), names)
+	if err != nil {
+		log.Fatalf("Failed to determine reviewer: %v", err)
+	}
 
-	prDescription := internal.StringPrompt(fmt.Sprintf("Provide a description for PR #%s: ", fmt.Sprint(pr.Number)))
+	prDescription, err := internal.DescriptionPrompt(fmt.Sprintf("Provide a description for PR #%s", fmt.Sprint(pr.Number)))
+	if err != nil {
+		log.Fatalf("Failed to capture PR description: %v", err)
+	}
 
 	// Create the message format for Slack
 	messageFormat := `{"channel": "%s", "text": "(+%s/-%s) <%s|PR #%s>: %s <@%s>"}`
