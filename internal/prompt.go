@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"strings"
+
+	"github.com/manifoldco/promptui"
 )
 
 func filterNames(names []string, filter string) []string {
@@ -18,38 +20,43 @@ func filterNames(names []string, filter string) []string {
 	return filteredNames
 }
 
-func StringPromptReview(prompt string, names []string) string {
+func handleMultipleReviewers(reviewers []string) (string, error) {
+	label := "\033[1mReviewer chosen: \033[0m"
+	prompt := promptui.Select{
+		Label: "Choose your reviewer",
+		Items: reviewers,
+		Templates: &promptui.SelectTemplates{
+			Selected: fmt.Sprintf(`%s: {{ . | faint }}`, label),
+		},
+	}
+
+	_, result, err := prompt.Run()
+	if err != nil {
+		fmt.Printf("Prompt failed %v\n", err)
+		return "", err
+	}
+
+	return result, nil
+}
+
+func ReviewerPrompt(prompt string, names []string) (string, error) {
 	reader := bufio.NewReader(os.Stdin)
 
 	var reviewer string
-	var counter int
+
 	for {
-		if counter > 0 {
-			fmt.Print("\nEnter a reviewer (we fuzzy match): ")
-		} else {
-			fmt.Print("Enter a reviewer (we fuzzy match): ")
-		}
+		fmt.Print(prompt)
 
 		input, err := reader.ReadString('\n')
 		if err != nil {
-			fmt.Println("Error reading input:", err)
-			break
+			return "", err
 		}
 
 		// Trim newline character
 		input = strings.TrimSpace(input)
 
-		// If input is empty, exit
-		if input == "" {
-			break
-		}
-
 		// Filter and print names based on input
 		filteredNames := filterNames(names, input)
-
-		// If we receive more than one name, say something witty prompt the user to choose one
-		// using the number next to the name
-		// Switch on the length of filtered names
 
 		if len(filteredNames) == 0 {
 			fmt.Println("0 results. Are you sure this person works here? Try again.")
@@ -58,17 +65,20 @@ func StringPromptReview(prompt string, names []string) string {
 			reviewer = filteredNames[0]
 			break
 		} else {
-			fmt.Printf("Too lazy. I found %d results. Try again.", len(filteredNames))
+			// If we receive more than one name, prompt the user to choose one
+			reviewer, err := handleMultipleReviewers(filteredNames)
+			if err != nil {
+				return "", err
+			}
+			return reviewer, nil
 		}
-
-		counter += 1
 
 	}
 
-	return reviewer
+	return reviewer, nil
 }
 
-func StringPrompt(prompt string) string {
+func DescriptionPrompt(prompt string) string {
 	reader := bufio.NewReader(os.Stdin)
 	var input string
 

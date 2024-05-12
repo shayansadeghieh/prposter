@@ -14,13 +14,22 @@ func main() {
 	}
 
 	namesToID, names, err := internal.ReadSlackUsers()
+
+	// Check for len(names) to be 0 due to slack rate limits
 	if err != nil {
 		log.Fatalf("Error reading slack users: %v", err)
 	}
 
-	reviewer := internal.StringPromptReview(fmt.Sprintf("Enter a reviewer for PR #%s: ", fmt.Sprint(pr.Number)), names)
+	if len(names) == 0 {
+		log.Fatalf("Zero slack users read. This is likely due to slack's rate limits. Wait a minute and then try again.")
+	}
 
-	prDescription := internal.StringPrompt(fmt.Sprintf("Provide a description for PR #%s: ", fmt.Sprint(pr.Number)))
+	reviewer, err := internal.ReviewerPrompt(fmt.Sprintf("\033[1mEnter a reviewer for PR #%s: \033[0m", fmt.Sprint(pr.Number)), names)
+	if err != nil {
+		log.Fatalf("Error reading reviewer: %v", err)
+	}
+
+	prDescription := internal.DescriptionPrompt(fmt.Sprintf("\033[1mProvide a description for PR #%s: \033[0m", fmt.Sprint(pr.Number)))
 
 	// Create the message format for Slack
 	messageFormat := `{"channel": "%s", "text": "(+%s/-%s) <%s|PR #%s>: %s <@%s>"}`
@@ -35,4 +44,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error sending message to Slack: %v", err)
 	}
+
+	fmt.Println("\033[1;32mPR successfully posted to slack.\033[0m")
+
 }
