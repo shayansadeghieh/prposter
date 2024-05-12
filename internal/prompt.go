@@ -71,13 +71,26 @@ func StringPromptReview(prompt string, names []string) string {
 func StringPrompt(prompt string) string {
 	reader := bufio.NewReader(os.Stdin)
 	var input string
+
+	fmt.Print(prompt)
+
 	for {
-		fmt.Print(prompt)
-		// Read the keyboad input
-		input, _ = reader.ReadString('\n')
-		if input != "" {
+		char, _, err := reader.ReadRune()
+		if err != nil {
+			fmt.Println("Error reading input:", err)
+			os.Exit(1)
+		}
+
+		if char == '\n' {
 			break
+		} else if char == '\b' { // Handle backspace
+			if len(input) > 0 {
+				input = input[:len(input)-1]
+			}
+		} else {
+			input += string(char)
 		}
 	}
+
 	return strings.TrimSpace(input)
 }
