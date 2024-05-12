@@ -73,7 +73,7 @@ func StringPrompt(prompt string) string {
 	var input string
 	for {
 		fmt.Print(prompt)
-		// Read the keyboad input.
+		// Read the keyboad input
 		input, _ = reader.ReadString('\n')
 		if input != "" {
 			break
