@@ -1,4 +1,4 @@
-module prposter
+module github.com/shayansadeghieh/prposter
 
 go 1.22.2
 
