@@ -21,7 +21,7 @@ func filterNames(names []string, filter string) []string {
 }
 
 func handleMultipleReviewers(reviewers []string) (string, error) {
-	label := "Choose your reviewer"
+	label := "\033[1mReviewer chosen: \033[0m"
 	prompt := promptui.Select{
 		Label: "Choose your reviewer",
 		Items: reviewers,
@@ -55,17 +55,8 @@ func ReviewerPrompt(prompt string, names []string) (string, error) {
 		// Trim newline character
 		input = strings.TrimSpace(input)
 
-		// If input is empty, exit
-		if input == "" {
-			break
-		}
-
 		// Filter and print names based on input
 		filteredNames := filterNames(names, input)
-
-		// If we receive more than one name, say something witty prompt the user to choose one
-		// using the number next to the name
-		// Switch on the length of filtered names
 
 		if len(filteredNames) == 0 {
 			fmt.Println("0 results. Are you sure this person works here? Try again.")
@@ -74,6 +65,8 @@ func ReviewerPrompt(prompt string, names []string) (string, error) {
 			reviewer = filteredNames[0]
 			break
 		} else {
+			// If we receive more than one name,  prompt the user to choose one
+			// using the number next to the name
 			reviewer, err := handleMultipleReviewers(filteredNames)
 			if err != nil {
 				return "", err
