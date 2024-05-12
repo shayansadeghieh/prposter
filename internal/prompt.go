@@ -61,7 +61,7 @@ func ReviewerPrompt(prompt string, names []string) (string, error) {
 		if len(filteredNames) == 0 {
 			fmt.Println("0 results. Are you sure this person works here? Try again.")
 		} else if len(filteredNames) == 1 {
-			fmt.Println(filteredNames[0])
+			fmt.Printf("\033[1mReviewer chosen: \033[0m %s \n", filteredNames[0])
 			reviewer = filteredNames[0]
 			break
 		} else {
