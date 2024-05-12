@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"prposter/internal"
+
+	"github.com/shayansadeghieh/prposter/internal"
 )
 
 func main() {
