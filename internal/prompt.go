@@ -65,8 +65,7 @@ func ReviewerPrompt(prompt string, names []string) (string, error) {
 			reviewer = filteredNames[0]
 			break
 		} else {
-			// If we receive more than one name,  prompt the user to choose one
-			// using the number next to the name
+			// If we receive more than one name, prompt the user to choose one
 			reviewer, err := handleMultipleReviewers(filteredNames)
 			if err != nil {
 				return "", err
