@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"strings"
+
+	"github.com/chzyer/readline"
 )
 
 func filterNames(names []string, filter string) []string {
@@ -69,28 +71,49 @@ func StringPromptReview(prompt string, names []string) string {
 }
 
 func StringPrompt(prompt string) string {
-	reader := bufio.NewReader(os.Stdin)
-	var input string
-
-	fmt.Print(prompt)
+	l, err := readline.NewEx(&readline.Config{
+		Prompt:            "\033[31m»\033[0m ",
+		HistoryFile:       "/tmp/readline.tmp",
+		InterruptPrompt:   "^C",
+		EOFPrompt:         "exit",
+		HistorySearchFold: true,
+	})
+	if err != nil {
+		panic(err)
+	}
+	defer l.Close()
 
 	for {
-		char, _, err := reader.ReadRune()
-		if err != nil {
-			fmt.Println("Error reading input:", err)
-			os.Exit(1)
-		}
-
-		if char == '\n' {
-			break
-		} else if char == '\b' { // Handle backspace
-			if len(input) > 0 {
-				input = input[:len(input)-1]
-			}
-		} else {
-			input += string(char)
-		}
+		line, _ := l.Readline()
+		fmt.Println(line)
 	}
 
-	return strings.TrimSpace(input)
+	return ""
 }
+
+// func StringPrompt(prompt string) string {
+// 	reader := bufio.NewReader(os.Stdin)
+// 	var input string
+
+// 	fmt.Print(prompt)
+
+// 	for {
+// 		char, _, err := reader.ReadRune()
+// 		if err != nil {
+// 			fmt.Println("Error reading input:", err)
+// 			os.Exit(1)
+// 		}
+
+// 		if char == '\n' {
+// 			break
+// 		} else if char == '\b' { // Handle backspace
+// 			if len(input) > 0 {
+// 				input = input[:len(input)-1]
+// 			}
+// 		} else {
+// 			input += string(char)
+// 		}
+// 	}
+
+// 	return strings.TrimSpace(input)
+// }
