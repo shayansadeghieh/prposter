@@ -8,6 +8,7 @@ import (
 	"github.com/shayansadeghieh/prposter/internal"
 )
 
+// Hello there
 func main() {
 	pr, err := internal.GhCommand()
 	if err != nil {
